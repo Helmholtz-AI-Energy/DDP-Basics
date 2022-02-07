@@ -1,20 +1,20 @@
 # Steps:
-1. [ ] download torch image from NVIDIA (singularity)
+1. download torch image from NVIDIA (singularity)
 	- `singularity pull new-torch-image-file.sif docker://nvcr.io/nvidia/pytorch:22.01-py3`
 	- NOTE: if you are required to provide auth for the image: add this flag `--docker-login ` and enter your information when prompted
-2. [ ] create a 'sandbox': `singularity build --sandbox --writable sandbox_torch/ torch.sif`
-3. [ ] move to sandbox: `cd sandbox_torch/`
-4. [ ] clone your git repo...i leave this to you
-5. [ ] add the `comm.py` file to your repo and put it in a place that you can import the functions within
-6. [ ] determine which `wireup-method` is best for you (this is system dependent) for HoreKa use `nccl-slurm-pmi`
-7. [ ] when launching the job use `srun` and make sure to use the correct MPI when launching the jobs. for HoreKa use: `--mpi=pmi2`
-8. [ ] export these two things WITHIN the `srun` call:
+2. create a 'sandbox': `singularity build --sandbox --writable sandbox_torch/ torch.sif`
+3. move to sandbox: `cd sandbox_torch/`
+4. clone your git repo...i leave this to you
+5. add the `comm.py` file to your repo and put it in a place that you can import the functions within
+6. determine which `wireup-method` is best for you (this is system dependent) for HoreKa use `nccl-slurm-pmi`
+7. when launching the job use `srun` and make sure to use the correct MPI when launching the jobs. for HoreKa use: `--mpi=pmi2`
+8. export these two things WITHIN the `srun` call:
 	- `MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1);`
 	- `MASTER_PORT=6000`
-9. [ ] here is an example `train.sh` script which can be used to spawn a training
-10. [ ] tell torch to use DDP training.
-11. [ ] Make sure that the data and network on are the correct device. The local rank (if number of node-local ranks == number of node-local GPUs) can be found with `comm.local_rank()`
-12. [ ] It may be useful to stop all ranks from printing / logging. get the global rank with `comm.get_rank()`
+9. here is an example `train.sh` script which can be used to spawn a training
+10. tell torch to use DDP training.
+11. Make sure that the data and network on are the correct device. The local rank (if number of node-local ranks == number of node-local GPUs) can be found with `comm.local_rank()`
+12. It may be useful to stop all ranks from printing / logging. get the global rank with `comm.get_rank()`
 
 ### Example Train script
 ```bash
