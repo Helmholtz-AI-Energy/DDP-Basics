@@ -1,20 +1,21 @@
-# Steps:
+# General Steps:
 1. download torch image from NVIDIA (singularity)
 	- `singularity pull new-torch-image-file.sif docker://nvcr.io/nvidia/pytorch:22.01-py3`
 	- NOTE: if you are required to provide auth for the image: add this flag `--docker-login ` and enter your information when prompted
-2. create a 'sandbox': `singularity build --sandbox --writable sandbox_torch/ torch.sif`
+2. create a 'sandbox': `singularity build --sandbox sandbox_torch/ torch.sif`
 3. move to sandbox: `cd sandbox_torch/`
 4. clone your git repo...i leave this to you
-5. add the `comm.py` file to your repo and put it in a place that you can import the functions within
-6. determine which `wireup-method` is best for you (this is system dependent) for HoreKa use `nccl-slurm-pmi`
-7. when launching the job use `srun` and make sure to use the correct MPI when launching the jobs. for HoreKa use: `--mpi=pmi2`
-8. export these two things WITHIN the `srun` call:
+5. add the `comm.py` file to your repo and put it in a place that you can import the functions within. Add `mpi4py` to your required packages
+6. activate a shell (`singularity shell sandbox_torch/`) and install your package (recommended way: `pip install -e .`). you may need to make a venv, or make the sandbox writable
+7. determine which `wireup-method` is best for you (this is system dependent) for HoreKa use `nccl-slurm-pmi`
+8. when launching the job use `srun` and make sure to use the correct MPI when launching the jobs. for HoreKa use: `--mpi=pmi2`
+9. export these two things WITHIN the `srun` call:
 	- `MASTER_ADDR=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1);`
 	- `MASTER_PORT=6000`
-9. here is an example `train.sh` script which can be used to spawn a training
-10. tell torch to use DDP training.
-11. Make sure that the data and network on are the correct device. The local rank (if number of node-local ranks == number of node-local GPUs) can be found with `comm.local_rank()`
-12. It may be useful to stop all ranks from printing / logging. get the global rank with `comm.get_rank()`
+10. here is an example `train.sh` script which can be used to spawn a training
+11. tell torch to use DDP training.
+12. Make sure that the data and network on are the correct device. The local rank (if number of node-local ranks == number of node-local GPUs) can be found with `comm.local_rank()`
+13. It may be useful to stop all ranks from printing / logging. get the global rank with `comm.get_rank()`
 
 ### Example Train script
 ```bash
@@ -65,9 +66,22 @@ net = nn.SyncBatchNorm.convert_sync_batchnorm(net, group)
 net = nn.parallel.DistributedDataParallel(net, device_ids=[device.index])
 ```
 
-## Notes:
+## JSC Machines
+- 1. download torch image from NVIDIA (singularity)
+	- `singularity pull new-torch-image-file.sif docker://nvcr.io/nvidia/pytorch:22.01-py3`
+	- NOTE: if you are required to provide auth for the image: add this flag `--docker-login ` and enter your information when prompted
+	- see: https://apps.fz-juelich.de/jsc/hps/juwels/container-runtime.html?highlight=container#container-build-system
+- 2. `salloc` a node and acivate the image (``)
+
+# Notes:
 - the sandbox image is not editable by the script. Files inside are read-only at runtime. All outputs should be to a different folder
 - the `comm.py` is not foolproof. systems are different and may require special treatment.
 - large nodes require a larger `timeout`  value for wireup. 
 - the delay while creating the process groups is to avoid all ranks pinging a single rank and DDOS it
+- the `comm.py` script could be updated to NOT require `mpi4py` at all if desired. But slurm would still require it
 - 
+
+# Useful links
+- HoreKa (KIT): https://www.nhr.kit.edu/userdocs/horeka/containers/
+- JUWELS (JSC): https://apps.fz-juelich.de/jsc/hps/juwels/container-runtime.html?highlight=container#container-build-system
+- https://sylabs.io/singularity/
